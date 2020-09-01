@@ -152,8 +152,7 @@ cv2.waitKey(0)
 # can not resize the image.
 """
 # -#-#-#-#- test - 4 #-#-#-#-#-#-#-#-
-
-
+"""
 def stackImages(scale, imgArray):
     rows = len(imgArray)
     cols = len(imgArray[0])
@@ -200,7 +199,7 @@ def stackImages(scale, imgArray):
         hor = np.hstack(imgArray)
         ver = hor
     return ver
-
+"""
 
 """
 
@@ -356,7 +355,7 @@ while True:
 
 """
 # -#-#-#-#- test - 4 #-#-#-#-#-#-#-#-
-
+"""
 import cv2
 import numpy as np
 
@@ -364,14 +363,14 @@ faceCascade = cv2.CascadeClassifier(
     "venv/Lib/site-packages/cv2/data/haarcascade_frontalface_default.xml"
 )
 
-# original = cv2.imread('Resources/spaceout.gif')
+original = cv2.imread('Resources/IMG_1355.jpg')
 # print(original.shape)
 
-# img = cv2.resize(original,None, fx = 1 , fy= 1 , interpolation=cv2.INTER_AREA)
-img = cv2.imread("Resources/marvel-class-photo.jpg")
+img = cv2.resize(original,None, fx = 0.25 , fy= 0.25 , interpolation=cv2.INTER_AREA)
+#img = cv2.imread("Resources/IMG_1355.jpg")
 imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-faces = faceCascade.detectMultiScale(imgGray, 1.01, 1, None, (15, 15), (45, 45))
+faces = faceCascade.detectMultiScale(imgGray, 1.02, 1, None, (2, 2), (600, 600))
 
 # scaleFactor – Parameter specifying how much the image size is reduced at each image scale.
 # Basically the scale factor is used to create your scale pyramid. More explanation can be found here. In short, as described here, your model has a fixed size defined during training, which is visible in the xml. This means that this size of face is detected in the image if present. However, by rescaling the input image, you can resize a larger face to a smaller one, making it detectable by the algorithm.
@@ -393,4 +392,54 @@ for (x, y, w, h) in faces:
 
 cv2.imshow("img", img)
 cv2.waitKey(0)
+"""
+# -#-#-#-#- test - 4 #-#-#-#-#-#-#-#-
+
+import cv2
+import numpy as np
+
+frameWidth = 640
+frameHeight = 480
+cap = cv2.VideoCapture(0)
+cap.set(3, frameWidth)
+cap.set(4, frameHeight)
+cap.set(10, 130)
+
+myColors = [[0, 104, 164, 13, 218, 255]]
+
+
+def findColor(img, myColors):
+
+    imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower = np.array(myColors[0][0:3])
+    upper = np.array(myColors[0][3:])
+    mask = cv2.inRange(imgHSV, lower, upper)
+    getContours(mask)
+    # cv2.imshow("img", mask)
+
+
+def getContours(img):
+    contours, hierarchy = cv2.findContours(
+        img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
+    )
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+
+        if area > 5:
+            cv2.drawContours(imgResult, cnt, -1, (255, 0, 0), 3)
+
+            peri = cv2.arcLength(cnt, True)
+            approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
+            x, y, w, h = cv2.boundingRect(approx)
+
+
+while True:
+    success, img = cap.read()
+    imgResult = img.copy()
+    findColor(img, myColors)
+
+    #cv2.imshow("WebCam", img)
+    cv2.imshow("Result", imgResult)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
 
