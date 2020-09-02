@@ -405,40 +405,72 @@ cap.set(3, frameWidth)
 cap.set(4, frameHeight)
 cap.set(10, 130)
 
-myColors = [[0, 104, 164, 13, 218, 255]]
+myColors = [
+    [0, 104, 164, 13, 218, 255],  # orange
+    [117, 118, 82, 129, 240, 252],  # blue
+    [52, 69, 96, 78, 187, 255],  # green
+]
+
+colorValues = [[0, 128, 255], [255, 0, 0], [0, 255, 0]]  # orange, blue, green in BGR
+
+myPoints = [] #x, y, colorID]
 
 
 def findColor(img, myColors):
 
     imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    lower = np.array(myColors[0][0:3])
-    upper = np.array(myColors[0][3:])
-    mask = cv2.inRange(imgHSV, lower, upper)
-    getContours(mask)
-    # cv2.imshow("img", mask)
+    index = 0
+    x, y, w, h = (0, 0, 0, 0)
+
+    for color in myColors:
+
+        lower = np.array(color[0:3])
+        upper = np.array(color[3:])
+        mask = cv2.inRange(imgHSV, lower, upper)
+        x, y = getContours(mask)
+        cv2.circle(imgResult, (x, y), 5, colorValues[index], cv2.FILLED)
+        # cv2.imshow("img", mask)
+        if x!=0 and y != 0:
+            newPoints.append([x,y,index])
+        index += 1
+    return newPoints
+
 
 
 def getContours(img):
     contours, hierarchy = cv2.findContours(
         img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
     )
+    x, y, w, h = (0, 0, 0, 0)
     for cnt in contours:
         area = cv2.contourArea(cnt)
 
-        if area > 5:
-            cv2.drawContours(imgResult, cnt, -1, (255, 0, 0), 3)
+        if area > 200:
+            # cv2.drawContours(imgResult, cnt, -1, (255, 0, 0), 3)
 
             peri = cv2.arcLength(cnt, True)
             approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
             x, y, w, h = cv2.boundingRect(approx)
 
+    return x + w // 2, y
+
+
+def drawOnCanvas(myPoints, myColorValues):
+    for point in myPoints:
+        cv2.circle(
+            imgResult, (point[0], point[1], 5, myColorValues[point[2]], cv2.FILLED)
+        )
+
 
 while True:
     success, img = cap.read()
     imgResult = img.copy()
-    findColor(img, myColors)
+    newPoints = findColor(img, myColors, myColorValues)
+    if len(newPoints) !=0 :
+        for newP in newPoints:
+            myPoints.append(newP)
 
-    #cv2.imshow("WebCam", img)
+    # cv2.imshow("WebCam", img)
     cv2.imshow("Result", imgResult)
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
